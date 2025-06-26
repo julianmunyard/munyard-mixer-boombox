@@ -247,7 +247,7 @@ export default function Home() {
             onChange={(e) => setVarispeed(parseFloat(e.target.value))}
             className="w-1 h-28 appearance-none bg-transparent z-10"
             style={{
-  // @ts-ignore
+  // @ts-expect-error
   writingMode: 'bt-lr',
   WebkitAppearance: 'slider-vertical',
   accentColor: '#B8001F',
