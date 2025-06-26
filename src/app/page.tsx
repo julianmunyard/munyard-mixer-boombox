@@ -1,103 +1,259 @@
-import Image from "next/image";
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import DelayKnob from './components/DelayKnob'
+
+type Stem = {
+  label: string
+  file: string
+}
+
+const stems: Stem[] = [
+  { label: 'DRUMS', file: 'DRUMS.mp3' },
+  { label: 'SYNTHS', file: 'SYNTHS.mp3' },
+  { label: 'GUITARS', file: 'GUITARS.mp3' },
+  { label: 'BASS', file: 'BASS.mp3' },
+  { label: 'VOCALS', file: 'VOCALS.mp3' },
+]
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [volumes, setVolumes] = useState(Object.fromEntries(stems.map(s => [s.label, 1])))
+  const [delays, setDelays] = useState(Object.fromEntries(stems.map(s => [s.label, 0])))
+  const [mutes, setMutes] = useState(Object.fromEntries(stems.map(s => [s.label, false])))
+  const [solos, setSolos] = useState(Object.fromEntries(stems.map(s => [s.label, false])))
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [varispeed, setVarispeed] = useState(1)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const buffersRef = useRef<Record<string, AudioBuffer>>({})
+  const nodesRef = useRef<Record<string, AudioWorkletNode>>({})
+  const gainNodesRef = useRef<Record<string, GainNode>>({})
+  const delayNodesRef = useRef<Record<string, DelayNode>>({})
+  const feedbackGainsRef = useRef<Record<string, GainNode>>({})
+
+  useEffect(() => {
+    const init = async () => {
+      const ctx = new AudioContext()
+      await ctx.audioWorklet.addModule('/granular-processor.js')
+      audioCtxRef.current = ctx
+
+      const eighthNoteDelay = 60 / 120 / 2
+
+      const loadStem = async (label: string, file: string) => {
+        const res = await fetch(`/stems/millionaire/${file}`)
+        const arrayBuffer = await res.arrayBuffer()
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
+        buffersRef.current[label] = audioBuffer
+
+        const gainNode = ctx.createGain()
+        const delayNode = ctx.createDelay(5.0)
+        delayNode.delayTime.value = eighthNoteDelay
+
+        const feedback = ctx.createGain()
+        feedback.gain.value = delays[label] || 0
+
+        delayNode.connect(feedback).connect(delayNode)
+        const output = ctx.createGain()
+        delayNode.connect(output)
+        output.connect(ctx.destination)
+
+        gainNodesRef.current[label] = output
+        delayNodesRef.current[label] = delayNode
+        feedbackGainsRef.current[label] = feedback
+      }
+
+      stems.forEach(({ label, file }) => loadStem(label, file))
+    }
+
+    init()
+  }, [])
+
+  const stopAll = () => {
+    Object.values(nodesRef.current).forEach((node) => {
+      try {
+        node.port.postMessage({ type: 'stop' })
+        node.disconnect()
+      } catch {}
+    })
+    nodesRef.current = {}
+    setIsPlaying(false)
+  }
+
+  const playAll = async () => {
+    const ctx = audioCtxRef.current
+    if (!ctx) return
+    if (ctx.state === 'suspended') await ctx.resume()
+
+    stopAll()
+
+    stems.forEach(({ label }) => {
+      const buffer = buffersRef.current[label]
+      const gain = gainNodesRef.current[label]
+      const delay = delayNodesRef.current[label]
+      if (!buffer || !gain || !delay) return
+
+      const node = new AudioWorkletNode(ctx, 'granular-player')
+      node.port.postMessage({ type: 'load', buffer: buffer.getChannelData(0) })
+      node.parameters.get('playbackRate')?.setValueAtTime(varispeed, ctx.currentTime)
+      node.connect(delay)
+
+      const soloed = Object.values(solos).some(Boolean)
+      const shouldPlay = soloed ? solos[label] : !mutes[label]
+      gain.gain.value = shouldPlay ? volumes[label] : 0
+
+      nodesRef.current[label] = node
+    })
+
+    setIsPlaying(true)
+  }
+
+  const toggleMute = (label: string) => {
+    setMutes((prev) => ({ ...prev, [label]: !prev[label] }))
+    setSolos((prev) => ({ ...prev, [label]: false }))
+  }
+
+  const toggleSolo = (label: string) => {
+    setSolos((prev) => ({ ...prev, [label]: !prev[label] }))
+    setMutes((prev) => ({ ...prev, [label]: false }))
+  }
+
+  const unsoloAll = () => {
+    setSolos(Object.fromEntries(stems.map(({ label }) => [label, false])))
+    setMutes(Object.fromEntries(stems.map(({ label }) => [label, false])))
+  }
+
+  useEffect(() => {
+    const ctx = audioCtxRef.current
+    if (!ctx) return
+    const eighthNoteDelay = 60 / 120 / 2
+
+    stems.forEach(({ label }) => {
+      const gain = gainNodesRef.current[label]
+      const delay = delayNodesRef.current[label]
+      const feedback = feedbackGainsRef.current[label]
+      if (!gain || !delay || !feedback) return
+
+      const soloed = Object.values(solos).some(Boolean)
+      const shouldPlay = soloed ? solos[label] : !mutes[label]
+      gain.gain.value = shouldPlay ? volumes[label] : 0
+
+      delay.delayTime.value = eighthNoteDelay
+      const feedbackVal = delays[label] || 0
+      feedback.gain.setTargetAtTime(feedbackVal, ctx.currentTime, 2.5)
+    })
+  }, [volumes, mutes, solos, delays])
+
+  useEffect(() => {
+    const ctx = audioCtxRef.current
+    if (!ctx) return
+
+    Object.values(nodesRef.current).forEach((node) => {
+      node.parameters.get('playbackRate')?.setValueAtTime(varispeed, ctx.currentTime)
+    })
+  }, [varispeed])
+
+  return (
+    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative">
+      <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
+        Munyard Mixer
+      </h1>
+
+   <div className="flex gap-4 justify-center mb-8 flex-wrap">
+  <button
+    onClick={playAll}
+    className="bg-red-700 text-white font-mono text-sm px-6 py-2 transition-all duration-150 transform hover:bg-red-800 hover:-translate-y-0.5"
+  >
+    Play
+  </button>
+  <button
+    onClick={stopAll}
+    className="bg-red-700 text-white font-mono text-sm px-6 py-2 transition-all duration-150 transform hover:bg-red-800 hover:-translate-y-0.5"
+  >
+    Stop
+  </button>
+  <button
+    onClick={unsoloAll}
+    className="bg-red-700 text-white font-mono text-sm px-6 py-2 transition-all duration-150 transform hover:bg-red-800 hover:-translate-y-0.5"
+  >
+    UNSOLO
+  </button>
+</div>
+
+
+
+      {/* Centered mixer block */}
+      <div className="flex justify-center">
+        <div className="flex gap-6 flex-wrap">
+          {stems.map((stem) => (
+            <div key={stem.label} className="flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-4 w-24 shadow-inner">
+              <div className="w-4 h-10 bg-green-600 animate-pulse mb-4 rounded-sm" />
+              <div className="flex flex-col items-center gap-2 text-sm text-white">
+                <span className="mb-1">LEVEL</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volumes[stem.label]}
+                  onChange={(e) =>
+                    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
+                  }
+                  className="w-1 h-36 appearance-none bg-transparent"
+                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+                />
+              </div>
+
+              <div className="my-2">
+                <DelayKnob
+                  value={delays[stem.label]}
+                  onChange={(val) => setDelays((prev) => ({ ...prev, [stem.label]: val }))}
+                />
+              </div>
+
+              <div className="mt-2 flex flex-col gap-2">
+                <button
+                  onClick={() => toggleMute(stem.label)}
+                  className={`px-2 py-1 text-xs rounded ${mutes[stem.label] ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}
+                >
+                  MUTE
+                </button>
+                <button
+                  onClick={() => toggleSolo(stem.label)}
+                  className={`px-2 py-1 text-xs rounded ${solos[stem.label] ? 'flash text-black' : 'bg-gray-700 text-white'}`}
+                >
+                  SOLO
+                </button>
+
+                <div className="mt-4 px-2 py-1 text-xs text-white border border-gray-600 rounded bg-gray-800 tracking-wide">
+                  {stem.label}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </div>
+
+      {/* Floating VARISPEED off to the right */}
+      <div className="absolute right-8 top-[300px] flex flex-col items-center">
+        <span className="mb-2 text-sm text-red-700">VARISPEED</span>
+        <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
+          <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
+          <input
+            type="range"
+            min="0.5"
+            max="1.5"
+            step="0.01"
+            value={varispeed}
+            onChange={(e) => setVarispeed(parseFloat(e.target.value))}
+            className="w-1 h-28 appearance-none bg-transparent z-10"
+            style={{
+              writingMode: 'bt-lr',
+              WebkitAppearance: 'slider-vertical',
+              accentColor: '#B8001F',
+            }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+        </div>
+      </div>
+    </main>
+  )
 }
