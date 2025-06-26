@@ -1,8 +1,6 @@
 'use client'
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, ChangeEvent } from 'react'
 import DelayKnob from './components/DelayKnob'
 
 type Stem = {
@@ -19,10 +17,10 @@ const stems: Stem[] = [
 ]
 
 export default function Home() {
-  const [volumes, setVolumes] = useState(Object.fromEntries(stems.map(s => [s.label, 1])))
-  const [delays, setDelays] = useState(Object.fromEntries(stems.map(s => [s.label, 0])))
-  const [mutes, setMutes] = useState(Object.fromEntries(stems.map(s => [s.label, false])))
-  const [solos, setSolos] = useState(Object.fromEntries(stems.map(s => [s.label, false])))
+  const [volumes, setVolumes] = useState<Record<string, number>>(Object.fromEntries(stems.map(s => [s.label, 1])))
+  const [delays, setDelays] = useState<Record<string, number>>(Object.fromEntries(stems.map(s => [s.label, 0])))
+  const [mutes, setMutes] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
+  const [solos, setSolos] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [isPlaying, setIsPlaying] = useState(false)
   const [varispeed, setVarispeed] = useState(1)
 
@@ -179,9 +177,12 @@ export default function Home() {
                   max="1"
                   step="0.01"
                   value={volumes[stem.label]}
-                  onChange={(e) => setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
+                  }
                   className="w-1 h-36 appearance-none bg-transparent"
-                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' } as any}
+                  // @ts-expect-error: custom vertical slider style
+                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
                 />
               </div>
 
@@ -209,9 +210,12 @@ export default function Home() {
             max="1.5"
             step="0.01"
             value={varispeed}
-            onChange={(e) => setVarispeed(parseFloat(e.target.value))}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setVarispeed(parseFloat(e.target.value))
+            }
             className="w-1 h-28 appearance-none bg-transparent z-10"
-            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' } as any}
+            // @ts-expect-error: custom vertical slider style
+            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
           />
         </div>
       </div>
