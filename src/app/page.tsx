@@ -23,6 +23,7 @@ export default function Home() {
   const [solos, setSolos] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [varispeed, setVarispeed] = useState(1)
 
+  const delaysRef = useRef<Record<string, number>>({})
   const audioCtxRef = useRef<AudioContext | null>(null)
   const buffersRef = useRef<Record<string, AudioBuffer>>({})
   const nodesRef = useRef<Record<string, AudioWorkletNode>>({})
@@ -30,7 +31,6 @@ export default function Home() {
   const delayNodesRef = useRef<Record<string, DelayNode>>({})
   const feedbackGainsRef = useRef<Record<string, GainNode>>({})
 
-  // INITIAL LOAD
   useEffect(() => {
     const init = async () => {
       const ctx = new AudioContext()
@@ -50,7 +50,7 @@ export default function Home() {
         const feedback = ctx.createGain()
 
         delayNode.delayTime.value = eighthNoteDelay
-        feedback.gain.value = delays[label] || 0
+        feedback.gain.value = delaysRef.current[label] || 0
 
         delayNode.connect(feedback).connect(delayNode)
         delayNode.connect(gainNode)
@@ -62,6 +62,7 @@ export default function Home() {
       }
 
       for (const { label, file } of stems) {
+        delaysRef.current[label] = delays[label] || 0
         await loadStem(label, file)
       }
     }
@@ -120,7 +121,6 @@ export default function Home() {
     setMutes(Object.fromEntries(stems.map(({ label }) => [label, false])))
   }
 
-  // LIVE CONTROL: updates levels and delay feedback
   useEffect(() => {
     const ctx = audioCtxRef.current
     if (!ctx) return
@@ -141,7 +141,6 @@ export default function Home() {
     })
   }, [volumes, mutes, solos, delays])
 
-  // LIVE VARISPEED
   useEffect(() => {
     const ctx = audioCtxRef.current
     if (!ctx) return
@@ -180,13 +179,19 @@ export default function Home() {
                     setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
                   }
                   className="w-1 h-36 appearance-none bg-transparent"
-                  // @ts-expect-error
+                  // @ts-expect-error vertical slider style not supported by TypeScript types
                   style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
                 />
               </div>
 
               <div className="my-2">
-                <DelayKnob value={delays[stem.label]} onChange={(val) => setDelays((prev) => ({ ...prev, [stem.label]: val }))} />
+                <DelayKnob
+                  value={delays[stem.label]}
+                  onChange={(val) => {
+                    setDelays((prev) => ({ ...prev, [stem.label]: val }))
+                    delaysRef.current[stem.label] = val
+                  }}
+                />
               </div>
 
               <div className="mt-2 flex flex-col gap-2">
@@ -213,7 +218,7 @@ export default function Home() {
               setVarispeed(parseFloat(e.target.value))
             }
             className="w-1 h-28 appearance-none bg-transparent z-10"
-            // @ts-expect-error
+            // @ts-expect-error vertical slider style not supported by TypeScript types
             style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
           />
         </div>
