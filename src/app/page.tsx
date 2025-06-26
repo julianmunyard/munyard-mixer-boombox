@@ -66,6 +66,7 @@ export default function Home() {
     }
 
     init()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const stopAll = () => {
@@ -181,7 +182,7 @@ export default function Home() {
                     setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
                   }
                   className="w-1 h-36 appearance-none bg-transparent"
-                  // @ts-expect-error: custom vertical slider style
+                  // @ts-expect-error: vertical writingMode not recognized
                   style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
                 />
               </div>
@@ -214,7 +215,7 @@ export default function Home() {
               setVarispeed(parseFloat(e.target.value))
             }
             className="w-1 h-28 appearance-none bg-transparent z-10"
-            // @ts-expect-error: custom vertical slider style
+            // @ts-expect-error: vertical writingMode not recognized
             style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
           />
         </div>
