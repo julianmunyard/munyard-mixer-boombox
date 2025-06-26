@@ -21,7 +21,6 @@ export default function Home() {
   const [delays, setDelays] = useState<Record<string, number>>(Object.fromEntries(stems.map(s => [s.label, 0])))
   const [mutes, setMutes] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [solos, setSolos] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
-  const [isPlaying, setIsPlaying] = useState(false)
   const [varispeed, setVarispeed] = useState(1)
 
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -77,7 +76,6 @@ export default function Home() {
       } catch {}
     })
     nodesRef.current = {}
-    setIsPlaying(false)
   }
 
   const playAll = async () => {
@@ -104,8 +102,6 @@ export default function Home() {
 
       nodesRef.current[label] = node
     })
-
-    setIsPlaying(true)
   }
 
   const toggleMute = (label: string) => {
