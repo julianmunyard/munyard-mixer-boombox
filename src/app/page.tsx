@@ -30,6 +30,7 @@ export default function Home() {
   const delayNodesRef = useRef<Record<string, DelayNode>>({})
   const feedbackGainsRef = useRef<Record<string, GainNode>>({})
 
+  // INITIAL LOAD
   useEffect(() => {
     const init = async () => {
       const ctx = new AudioContext()
@@ -46,26 +47,26 @@ export default function Home() {
 
         const gainNode = ctx.createGain()
         const delayNode = ctx.createDelay(5.0)
-        delayNode.delayTime.value = eighthNoteDelay
-
         const feedback = ctx.createGain()
+
+        delayNode.delayTime.value = eighthNoteDelay
         feedback.gain.value = delays[label] || 0
 
         delayNode.connect(feedback).connect(delayNode)
-        const output = ctx.createGain()
-        delayNode.connect(output)
-        output.connect(ctx.destination)
+        delayNode.connect(gainNode)
+        gainNode.connect(ctx.destination)
 
-        gainNodesRef.current[label] = output
+        gainNodesRef.current[label] = gainNode
         delayNodesRef.current[label] = delayNode
         feedbackGainsRef.current[label] = feedback
       }
 
-      stems.forEach(({ label, file }) => loadStem(label, file))
+      for (const { label, file } of stems) {
+        await loadStem(label, file)
+      }
     }
 
     init()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const stopAll = () => {
@@ -119,6 +120,7 @@ export default function Home() {
     setMutes(Object.fromEntries(stems.map(({ label }) => [label, false])))
   }
 
+  // LIVE CONTROL: updates levels and delay feedback
   useEffect(() => {
     const ctx = audioCtxRef.current
     if (!ctx) return
@@ -135,11 +137,11 @@ export default function Home() {
       gain.gain.value = shouldPlay ? volumes[label] : 0
 
       delay.delayTime.value = eighthNoteDelay
-      const feedbackVal = delays[label] || 0
-      feedback.gain.setTargetAtTime(feedbackVal, ctx.currentTime, 2.5)
+      feedback.gain.setTargetAtTime(delays[label] || 0, ctx.currentTime, 2.5)
     })
   }, [volumes, mutes, solos, delays])
 
+  // LIVE VARISPEED
   useEffect(() => {
     const ctx = audioCtxRef.current
     if (!ctx) return
@@ -178,7 +180,7 @@ export default function Home() {
                     setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
                   }
                   className="w-1 h-36 appearance-none bg-transparent"
-                  // @ts-expect-error: vertical writingMode not recognized
+                  // @ts-expect-error
                   style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
                 />
               </div>
@@ -211,7 +213,7 @@ export default function Home() {
               setVarispeed(parseFloat(e.target.value))
             }
             className="w-1 h-28 appearance-none bg-transparent z-10"
-            // @ts-expect-error: vertical writingMode not recognized
+            // @ts-expect-error
             style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
           />
         </div>
