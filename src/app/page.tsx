@@ -163,19 +163,19 @@ export default function Home() {
 <div className="flex gap-4 justify-center mb-8 flex-wrap">
   <button
     onClick={playAll}
-    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-100 ease-out active:translate-y-1 active:scale-95 font-mono tracking-wide"
+    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-150 ease-in-out hover:-translate-y-1 active:translate-y-1 active:scale-95 font-mono tracking-wide"
   >
     Play
   </button>
   <button
     onClick={stopAll}
-    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-100 ease-out active:translate-y-1 active:scale-95 font-mono tracking-wide"
+    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-150 ease-in-out hover:-translate-y-1 active:translate-y-1 active:scale-95 font-mono tracking-wide"
   >
     Stop
   </button>
   <button
     onClick={unsoloAll}
-    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-100 ease-out active:translate-y-1 active:scale-95 font-mono tracking-wide"
+    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-150 ease-in-out hover:-translate-y-1 active:translate-y-1 active:scale-95 font-mono tracking-wide"
   >
     UNSOLO
   </button>
@@ -247,10 +247,11 @@ export default function Home() {
             onChange={(e) => setVarispeed(parseFloat(e.target.value))}
             className="w-1 h-28 appearance-none bg-transparent z-10"
             style={{
-              writingMode: 'bt-lr',
-              WebkitAppearance: 'slider-vertical',
-              accentColor: '#B8001F',
-            }}
+  // @ts-ignore
+  writingMode: 'bt-lr',
+  WebkitAppearance: 'slider-vertical',
+  accentColor: '#B8001F',
+}}
           />
         </div>
       </div>
