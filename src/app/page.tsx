@@ -247,7 +247,7 @@ export default function Home() {
             onChange={(e) => setVarispeed(parseFloat(e.target.value))}
             className="w-1 h-28 appearance-none bg-transparent z-10"
             style={{
-  // @ts-expect-error
+  // @ts-expect-error This node param might be undefined in some builds
   writingMode: 'bt-lr',
   WebkitAppearance: 'slider-vertical',
   accentColor: '#B8001F',
