@@ -181,7 +181,7 @@ export default function Home() {
                   value={volumes[stem.label]}
                   onChange={(e) => setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))}
                   className="w-1 h-36 appearance-none bg-transparent"
-                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' } as any}
                 />
               </div>
 
@@ -211,7 +211,7 @@ export default function Home() {
             value={varispeed}
             onChange={(e) => setVarispeed(parseFloat(e.target.value))}
             className="w-1 h-28 appearance-none bg-transparent z-10"
-            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' } as any}
           />
         </div>
       </div>
