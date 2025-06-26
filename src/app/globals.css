@@ -24,7 +24,6 @@ body {
   font-family: var(--font-sans), sans-serif;
 }
 
-
 /* FLASHY SOLO BUTTON */
 @keyframes flash {
   0%, 100% {
@@ -50,7 +49,7 @@ body {
   color: inherit;
 }
 
-/* FADER SLIDER TRACK AND THUMB */
+/* UNIVERSAL RED SLIDER THUMB */
 input[type="range"] {
   -webkit-appearance: none;
   background: transparent;
@@ -58,40 +57,47 @@ input[type="range"] {
   height: 140px;
   width: 2px;
 }
-
 input[type="range"]::-webkit-slider-runnable-track {
   background: #FCFAEE;
   height: 140px;
   border-radius: 2px;
 }
-
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none;
   height: 40px;
   width: 18px;
-  background: url('/fader-thumb.png') no-repeat center center;
-  background-size: contain;
+  background: #B8001F;
+  border-radius: 9999px;
   border: none;
-  margin-top: -14px; /* updated to fix Safari bottom alignment */
+  margin-top: -14px;
 }
-
 input[type="range"]::-moz-range-track {
   background: #FCFAEE;
   height: 140px;
   border-radius: 2px;
 }
-
 input[type="range"]::-moz-range-thumb {
   height: 40px;
   width: 18px;
-  background: url('/fader-thumb.png') no-repeat center center;
-  background-size: contain;
+  background: #B8001F;
+  border-radius: 9999px;
+  border: none;
+}
+input[type="range"]::-ms-thumb {
+  height: 40px;
+  width: 18px;
+  background: #B8001F;
+  border-radius: 9999px;
   border: none;
 }
 
+/* PRESSABLE BUTTON STYLES */
 @layer utilities {
   .pressable {
     transition: background-color 0.15s ease, transform 0.1s ease;
+    will-change: transform;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .pressable:hover {

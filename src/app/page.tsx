@@ -160,28 +160,12 @@ export default function Home() {
         Munyard Mixer
       </h1>
 
-<div className="flex gap-4 justify-center mb-8 flex-wrap">
-  <button
-    onClick={playAll}
-    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-150 ease-in-out hover:-translate-y-1 active:translate-y-1 active:scale-95 font-mono tracking-wide"
-  >
-    Play
-  </button>
-  <button
-    onClick={stopAll}
-    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-150 ease-in-out hover:-translate-y-1 active:translate-y-1 active:scale-95 font-mono tracking-wide"
-  >
-    Stop
-  </button>
-  <button
-    onClick={unsoloAll}
-    className="bg-[#B30000] text-white px-6 py-2 transition-transform duration-150 ease-in-out hover:-translate-y-1 active:translate-y-1 active:scale-95 font-mono tracking-wide"
-  >
-    UNSOLO
-  </button>
-</div>
+      <div className="flex gap-4 justify-center mb-8 flex-wrap">
+        <button onClick={playAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Play</button>
+        <button onClick={stopAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Stop</button>
+        <button onClick={unsoloAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">UNSOLO</button>
+      </div>
 
-      {/* Centered mixer block */}
       <div className="flex justify-center">
         <div className="flex gap-6 flex-wrap">
           {stems.map((stem) => (
@@ -195,45 +179,26 @@ export default function Home() {
                   max="1"
                   step="0.01"
                   value={volumes[stem.label]}
-                  onChange={(e) =>
-                    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
-                  }
+                  onChange={(e) => setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))}
                   className="w-1 h-36 appearance-none bg-transparent"
                   style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
                 />
               </div>
 
               <div className="my-2">
-                <DelayKnob
-                  value={delays[stem.label]}
-                  onChange={(val) => setDelays((prev) => ({ ...prev, [stem.label]: val }))}
-                />
+                <DelayKnob value={delays[stem.label]} onChange={(val) => setDelays((prev) => ({ ...prev, [stem.label]: val }))} />
               </div>
 
               <div className="mt-2 flex flex-col gap-2">
-                <button
-                  onClick={() => toggleMute(stem.label)}
-                  className={`px-2 py-1 text-xs rounded ${mutes[stem.label] ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}
-                >
-                  MUTE
-                </button>
-                <button
-                  onClick={() => toggleSolo(stem.label)}
-                  className={`px-2 py-1 text-xs rounded ${solos[stem.label] ? 'flash text-black' : 'bg-gray-700 text-white'}`}
-                >
-                  SOLO
-                </button>
-
-                <div className="mt-4 px-2 py-1 text-xs text-white border border-gray-600 rounded bg-gray-800 tracking-wide">
-                  {stem.label}
-                </div>
+                <button onClick={() => toggleMute(stem.label)} className={`px-2 py-1 text-xs rounded ${mutes[stem.label] ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}>MUTE</button>
+                <button onClick={() => toggleSolo(stem.label)} className={`px-2 py-1 text-xs rounded ${solos[stem.label] ? 'flash text-black' : 'bg-gray-700 text-white'}`}>SOLO</button>
+                <div className="mt-4 px-2 py-1 text-xs text-white border border-gray-600 rounded bg-gray-800 tracking-wide">{stem.label}</div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Floating VARISPEED off to the right */}
       <div className="absolute right-8 top-[300px] flex flex-col items-center">
         <span className="mb-2 text-sm text-red-700">VARISPEED</span>
         <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
@@ -246,12 +211,7 @@ export default function Home() {
             value={varispeed}
             onChange={(e) => setVarispeed(parseFloat(e.target.value))}
             className="w-1 h-28 appearance-none bg-transparent z-10"
-            style={{
-  // @ts-expect-error This node param might be undefined in some builds
-  writingMode: 'bt-lr',
-  WebkitAppearance: 'slider-vertical',
-  accentColor: '#B8001F',
-}}
+            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
           />
         </div>
       </div>
