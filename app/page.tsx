@@ -1,3 +1,8 @@
+// UPDATED `page.tsx` with:
+// 1. Mobile-friendly layout (Tailwind responsive tweaks)
+// 2. Fixed varispeed position on small screens
+// 3. AudioContext resume fix for iOS Safari
+
 'use client'
 
 import { useEffect, useRef, useState, ChangeEvent } from 'react'
@@ -22,6 +27,7 @@ export default function Home() {
   const [mutes, setMutes] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [solos, setSolos] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [varispeed, setVarispeed] = useState(1)
+  const [audioUnlocked, setAudioUnlocked] = useState(false)
 
   const delaysRef = useRef<Record<string, number>>({})
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -83,7 +89,10 @@ export default function Home() {
   const playAll = async () => {
     const ctx = audioCtxRef.current
     if (!ctx) return
-    if (ctx.state === 'suspended') await ctx.resume()
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
+      setAudioUnlocked(true)
+    }
 
     stopAll()
 
@@ -151,8 +160,8 @@ export default function Home() {
   }, [varispeed])
 
   return (
-    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative">
-      <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
+    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-4 sm:p-8 font-sans relative">
+      <h1 className="village text-center mb-10 text-[48px] sm:text-[96px] tracking-[0.05em] leading-[1.1]">
         Munyard Mixer
       </h1>
 
@@ -162,8 +171,8 @@ export default function Home() {
         <button onClick={unsoloAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">UNSOLO</button>
       </div>
 
-      <div className="flex justify-center">
-        <div className="flex gap-6 flex-wrap">
+      <div className="flex flex-col lg:flex-row items-center lg:items-start lg:justify-center gap-6">
+        <div className="flex gap-4 flex-wrap justify-center">
           {stems.map((stem) => (
             <div key={stem.label} className="flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-4 w-24 shadow-inner">
               <div className="w-4 h-10 bg-green-600 animate-pulse mb-4 rounded-sm" />
@@ -202,25 +211,25 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </div>
 
-      <div className="absolute right-8 top-[300px] flex flex-col items-center">
-        <span className="mb-2 text-sm text-red-700">VARISPEED</span>
-        <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
-          <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
-          <input
-            type="range"
-            min="0.5"
-            max="1.5"
-            step="0.01"
-            value={varispeed}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setVarispeed(parseFloat(e.target.value))
-            }
-            className="w-1 h-28 appearance-none bg-transparent z-10"
-            // @ts-expect-error vertical slider style not supported by TypeScript types
-            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
-          />
+        <div className="mt-6 lg:mt-0 lg:absolute lg:right-8 top-[300px] flex flex-col items-center">
+          <span className="mb-2 text-sm text-red-700">VARISPEED</span>
+          <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
+            <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
+            <input
+              type="range"
+              min="0.5"
+              max="1.5"
+              step="0.01"
+              value={varispeed}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setVarispeed(parseFloat(e.target.value))
+              }
+              className="w-1 h-28 appearance-none bg-transparent z-10"
+              // @ts-expect-error vertical slider style not supported by TypeScript types
+              style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+            />
+          </div>
         </div>
       </div>
     </main>
