@@ -151,7 +151,7 @@ export default function Home() {
   }, [varispeed])
 
   return (
-    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative">
+    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative overflow-y-auto" style={{ maxHeight: '100dvh' }}>
       <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
         Munyard Mixer
       </h1>
@@ -163,25 +163,24 @@ export default function Home() {
       </div>
 
       <div className="flex justify-center">
-        <div className="flex gap-6 flex-wrap">
+        <div className="flex gap-4 flex-wrap sm:gap-6">
           {stems.map((stem) => (
-            <div key={stem.label} className="flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-4 w-24 shadow-inner">
+            <div key={stem.label} className="flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-3 sm:p-4 w-20 sm:w-24 shadow-inner">
               <div className="w-4 h-10 bg-green-600 animate-pulse mb-4 rounded-sm" />
               <div className="flex flex-col items-center gap-2 text-sm text-white">
                 <span className="mb-1">LEVEL</span>
                 <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volumes[stem.label]}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
-                  }
-                  className="w-1 h-36 appearance-none bg-transparent"
-                  // @ts-expect-error vertical slider style not supported by TypeScript types
-                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
-                />
+  type="range"
+  min="0"
+  max="1"
+  step="0.01"
+  value={volumes[stem.label]}
+  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
+  }
+  className="w-1 h-40 appearance-none bg-transparent"
+  style={{ writingMode: 'bt-lr' as any, WebkitAppearance: 'slider-vertical' as any }}
+/>
               </div>
 
               <div className="my-2">
@@ -195,34 +194,63 @@ export default function Home() {
               </div>
 
               <div className="mt-2 flex flex-col gap-2">
-                <button onClick={() => toggleMute(stem.label)} className={`px-2 py-1 text-xs rounded ${mutes[stem.label] ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}>MUTE</button>
-                <button onClick={() => toggleSolo(stem.label)} className={`px-2 py-1 text-xs rounded ${solos[stem.label] ? 'flash text-black' : 'bg-gray-700 text-white'}`}>SOLO</button>
-                <div className="mt-4 px-2 py-1 text-xs text-white border border-gray-600 rounded bg-gray-800 tracking-wide">{stem.label}</div>
+                <button
+                  onClick={() => toggleMute(stem.label)}
+                  className={`px-2 py-1 text-xs rounded ${
+                    mutes[stem.label]
+                      ? 'bg-yellow-500 text-black'
+                      : 'bg-white text-[#B8001F] hover:bg-[#f0ebd6]'
+                  }`}
+                >
+                  MUTE
+                </button>
+                <button
+                  onClick={() => toggleSolo(stem.label)}
+                  className={`px-2 py-1 text-xs rounded ${
+                    solos[stem.label]
+                      ? 'flash text-black'
+                      : 'bg-white text-[#B8001F] hover:bg-[#f0ebd6]'
+                  }`}
+                >
+                  SOLO
+                </button>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="absolute right-8 top-[300px] flex flex-col items-center">
-        <span className="mb-2 text-sm text-red-700">VARISPEED</span>
-        <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
-          <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
-          <input
-            type="range"
-            min="0.5"
-            max="1.5"
-            step="0.01"
-            value={varispeed}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setVarispeed(parseFloat(e.target.value))
-            }
-            className="w-1 h-28 appearance-none bg-transparent z-10"
-            // @ts-expect-error vertical slider style not supported by TypeScript types
-            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
-          />
-        </div>
-      </div>
+<div className="absolute right-4 top-[260px] flex flex-col items-center">
+  <span className="mb-3 text-sm text-red-700 tracking-wider">VARISPEED</span>
+  
+  <div
+    className="relative flex flex-col items-center border border-red-700 rounded-md"
+    style={{ height: '350px', width: '36px', paddingTop: '8px', paddingBottom: '8px' }}
+  >
+    <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
+
+    <input
+      type="range"
+      min="0.5"
+      max="1.5"
+      step="0.01"
+      value={varispeed}
+      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+        setVarispeed(parseFloat(e.target.value))
+      }
+      className="w-[6px] absolute top-[8px] bottom-[8px] appearance-none bg-transparent z-10"
+      style={{
+  // Cast each property individually to avoid type errors
+  writingMode: 'bt-lr' as React.CSSProperties['writingMode'],
+  WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance'],
+  height: 'calc(100% - 16px)',
+}}
+    />
+  </div>
+</div>
+
+
+
     </main>
   )
 }
