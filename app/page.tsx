@@ -83,7 +83,7 @@ export default function Home() {
   const playAll = async () => {
     const ctx = audioCtxRef.current
     if (!ctx) return
-    if (ctx.state === 'suspended') await ctx.resume() // ✅ iOS Safari fix
+    if (ctx.state === 'suspended') await ctx.resume()
 
     stopAll()
 
@@ -163,9 +163,12 @@ export default function Home() {
       </div>
 
       <div className="flex justify-center">
-        <div className="flex gap-6 flex-wrap">
+        <div className="flex gap-6 flex-wrap overflow-x-auto sm:overflow-visible whitespace-nowrap">
           {stems.map((stem) => (
-            <div key={stem.label} className="flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-4 w-24 shadow-inner">
+            <div
+              key={stem.label}
+              className="flex-shrink-0 inline-block align-top flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-4 w-24 shadow-inner"
+            >
               <div className="w-4 h-10 bg-green-600 animate-pulse mb-4 rounded-sm" />
               <div className="flex flex-col items-center gap-2 text-sm text-white">
                 <span className="mb-1">LEVEL</span>
