@@ -7,8 +7,10 @@ type DelayKnobProps = {
   onChange: (val: number) => void
 }
 
+type KnobElement = HTMLDivElement & { _lastY?: number }
+
 export default function DelayKnob({ value, onChange }: DelayKnobProps) {
-  const knobRef = useRef<HTMLDivElement>(null)
+  const knobRef = useRef<KnobElement | null>(null)
   const [dragging, setDragging] = useState(false)
 
   // Mouse support
@@ -31,18 +33,21 @@ export default function DelayKnob({ value, onChange }: DelayKnobProps) {
 
   // Touch support
   const handleTouchStart = () => setDragging(true)
+
   const handleTouchMove = (e: TouchEvent) => {
     if (!dragging || e.touches.length !== 1) return
     const touch = e.touches[0]
-    const lastY = (knobRef.current as any)?._lastY ?? touch.clientY
+    const knob = knobRef.current
+    const lastY = knob?._lastY ?? touch.clientY
     const delta = lastY - touch.clientY
     const newVal = Math.min(1, Math.max(0, value + delta * 0.005))
     onChange(parseFloat(newVal.toFixed(2)))
-    ;(knobRef.current as any)._lastY = touch.clientY
+    if (knob) knob._lastY = touch.clientY
   }
+
   const handleTouchEnd = () => {
     setDragging(false)
-    if (knobRef.current) (knobRef.current as any)._lastY = null
+    if (knobRef.current) knobRef.current._lastY = undefined
   }
 
   useEffect(() => {
