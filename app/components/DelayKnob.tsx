@@ -7,13 +7,10 @@ type DelayKnobProps = {
   onChange: (val: number) => void
 }
 
-type KnobElement = HTMLDivElement & { _lastY?: number }
-
 export default function DelayKnob({ value, onChange }: DelayKnobProps) {
-  const knobRef = useRef<KnobElement | null>(null)
+  const knobRef = useRef<HTMLDivElement>(null)
   const [dragging, setDragging] = useState(false)
 
-  // Mouse support
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragging) return
@@ -22,42 +19,36 @@ export default function DelayKnob({ value, onChange }: DelayKnobProps) {
       const newVal = Math.min(1, Math.max(0, value + delta * 0.005))
       onChange(parseFloat(newVal.toFixed(2)))
     }
-    const stop = () => setDragging(false)
-    window.addEventListener('mousemove', handleMouseMove)
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!dragging || e.touches.length !== 1) return
+      e.preventDefault()
+      const touch = e.touches[0]
+      const deltaY = touch.clientY - (knobRef.current?.dataset.lastY ? parseFloat(knobRef.current.dataset.lastY) : touch.clientY)
+      knobRef.current!.dataset.lastY = touch.clientY.toString()
+      const newVal = Math.min(1, Math.max(0, value - deltaY * 0.01))
+      onChange(parseFloat(newVal.toFixed(2)))
+    }
+
+    const stop = () => {
+      setDragging(false)
+      if (knobRef.current) {
+        delete knobRef.current.dataset.lastY
+      }
+    }
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: false })
     window.addEventListener('mouseup', stop)
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', stop)
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', stop)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', stop)
     }
   }, [dragging, value, onChange])
-
-  // Touch support
-  const handleTouchStart = () => setDragging(true)
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (!dragging || e.touches.length !== 1) return
-    const touch = e.touches[0]
-    const knob = knobRef.current
-    const lastY = knob?._lastY ?? touch.clientY
-    const delta = lastY - touch.clientY
-    const newVal = Math.min(1, Math.max(0, value + delta * 0.005))
-    onChange(parseFloat(newVal.toFixed(2)))
-    if (knob) knob._lastY = touch.clientY
-  }
-
-  const handleTouchEnd = () => {
-    setDragging(false)
-    if (knobRef.current) knobRef.current._lastY = undefined
-  }
-
-  useEffect(() => {
-    window.addEventListener('touchmove', handleTouchMove)
-    window.addEventListener('touchend', handleTouchEnd)
-    return () => {
-      window.removeEventListener('touchmove', handleTouchMove)
-      window.removeEventListener('touchend', handleTouchEnd)
-    }
-  })
 
   const angle = -135 + value * 270
 
@@ -67,9 +58,8 @@ export default function DelayKnob({ value, onChange }: DelayKnobProps) {
       <div
         ref={knobRef}
         onMouseDown={() => setDragging(true)}
-        onTouchStart={handleTouchStart}
+        onTouchStart={() => setDragging(true)}
         className="w-8 h-8 rounded-full bg-gray-700 border border-white flex items-center justify-center relative cursor-pointer"
-        style={{ transform: `rotate(0deg)` }}
       >
         <div
           className="absolute w-1 h-3 bg-white rounded"
