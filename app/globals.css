@@ -123,4 +123,3 @@ input[type="range"]::-ms-thumb {
 .spin-slow {
   animation: spin-slow 2s linear infinite;
 }
-

@@ -175,7 +175,6 @@ export default function Home() {
                 <div className="w-4 h-10 bg-green-600 animate-pulse mb-4 rounded-sm" />
                 <div className="flex flex-col items-center gap-2 text-sm text-white">
                   <span className="mb-1">LEVEL</span>
-           
                   <input
                     type="range"
                     min="0"
@@ -186,7 +185,7 @@ export default function Home() {
                       setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
                     }
                     className="w-1 h-36 appearance-none bg-transparent"
-                    style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+                    style={{ writingMode: 'vertical-lr' as any, WebkitAppearance: 'slider-vertical' as any }}
                   />
                 </div>
 
@@ -214,7 +213,6 @@ export default function Home() {
           <span className="mb-2 text-sm text-red-700">VARISPEED</span>
           <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
             <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
-     
             <input
               type="range"
               min="0.5"
@@ -225,7 +223,7 @@ export default function Home() {
                 setVarispeed(parseFloat(e.target.value))
               }
               className="w-1 h-28 appearance-none bg-transparent z-10"
-              style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+              style={{ writingMode: 'vertical-lr' as any, WebkitAppearance: 'slider-vertical' as any }}
             />
           </div>
         </div>
