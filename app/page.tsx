@@ -68,6 +68,7 @@ export default function Home() {
     }
 
     init()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const stopAll = () => {
@@ -185,14 +186,17 @@ export default function Home() {
                       setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
                     }
                     className="w-1 h-36 appearance-none bg-transparent"
-                    style={{ writingMode: 'vertical-lr' as any, WebkitAppearance: 'slider-vertical' as any }}
+                    style={{
+                      writingMode: 'vertical-lr' as React.CSSProperties['writingMode'],
+                      WebkitAppearance: 'slider-vertical'
+                    }}
                   />
                 </div>
 
                 <div className="my-2">
                   <DelayKnob
                     value={delays[stem.label]}
-                    onChange={(val) => {
+                    onChange={(val: number) => {
                       setDelays((prev) => ({ ...prev, [stem.label]: val }))
                       delaysRef.current[stem.label] = val
                     }}
@@ -223,7 +227,10 @@ export default function Home() {
                 setVarispeed(parseFloat(e.target.value))
               }
               className="w-1 h-28 appearance-none bg-transparent z-10"
-              style={{ writingMode: 'vertical-lr' as any, WebkitAppearance: 'slider-vertical' as any }}
+              style={{
+                writingMode: 'vertical-lr' as React.CSSProperties['writingMode'],
+                WebkitAppearance: 'slider-vertical'
+              }}
             />
           </div>
         </div>
