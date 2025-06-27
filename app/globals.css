@@ -1,125 +1,122 @@
 @import "tailwindcss";
 
+
 /* THEME + BACKGROUND */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+ --background: #ffffff;
+ --foreground: #171717;
 }
+
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+ --color-background: var(--background);
+ --color-foreground: var(--foreground);
+ --font-sans: var(--font-geist-sans);
+ --font-mono: var(--font-geist-mono);
 }
+
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+ :root {
+   --background: #0a0a0a;
+   --foreground: #ededed;
+ }
 }
 
+
 body {
-  font-family: var(--font-sans), sans-serif;
+ font-family: var(--font-sans), sans-serif;
 }
+
 
 /* FLASHY SOLO BUTTON */
 @keyframes flash {
-  0%, 100% {
-    background-color: #15803d;
-  }
-  50% {
-    background-color: #22c55e;
-  }
+ 0%, 100% {
+   background-color: #15803d;
+ }
+ 50% {
+   background-color: #22c55e;
+ }
 }
 .flash {
-  animation: flash 0.8s ease-in-out infinite;
+ animation: flash 0.8s ease-in-out infinite;
 }
+
 
 /* VILLAGE FONT */
 @font-face {
-  font-family: 'Village';
-  src: url('/fonts/Village-wLn3.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+ font-family: 'Village';
+ src: url('/fonts/Village-wLn3.ttf') format('truetype');
+ font-weight: normal;
+ font-style: normal;
 }
 .village {
-  font-family: 'Village', sans-serif;
-  color: inherit;
+ font-family: 'Village', sans-serif;
+ color: inherit;
 }
+
 
 /* UNIVERSAL RED SLIDER THUMB */
 input[type="range"] {
-  -webkit-appearance: none;
-  background: transparent;
-  cursor: pointer;
-  height: 140px;
-  width: 2px;
+ -webkit-appearance: none;
+ background: transparent;
+ cursor: pointer;
+ height: 140px;
+ width: 2px;
 }
 input[type="range"]::-webkit-slider-runnable-track {
-  background: #FCFAEE;
-  height: 140px;
-  border-radius: 2px;
+ background: #FCFAEE;
+ height: 140px;
+ border-radius: 2px;
 }
 input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 40px;
-  width: 18px;
-  background: #B8001F;
-  border-radius: 9999px;
-  border: none;
-  margin-top: -14px;
+ -webkit-appearance: none;
+ appearance: none;
+ height: 40px;
+ width: 18px;
+ background: #B8001F;
+ border-radius: 9999px;
+ border: none;
+ margin-top: -14px;
 }
 input[type="range"]::-moz-range-track {
-  background: #FCFAEE;
-  height: 140px;
-  border-radius: 2px;
+ background: #FCFAEE;
+ height: 140px;
+ border-radius: 2px;
 }
 input[type="range"]::-moz-range-thumb {
-  height: 40px;
-  width: 18px;
-  background: #B8001F;
-  border-radius: 9999px;
-  border: none;
+ height: 40px;
+ width: 18px;
+ background: #B8001F;
+ border-radius: 9999px;
+ border: none;
 }
 input[type="range"]::-ms-thumb {
-  height: 40px;
-  width: 18px;
-  background: #B8001F;
-  border-radius: 9999px;
-  border: none;
+ height: 40px;
+ width: 18px;
+ background: #B8001F;
+ border-radius: 9999px;
+ border: none;
 }
+
 
 /* PRESSABLE BUTTON STYLES */
 @layer utilities {
-  .pressable {
-    transition: background-color 0.15s ease, transform 0.1s ease;
-    will-change: transform;
-    -webkit-tap-highlight-color: transparent;
-  }
+ .pressable {
+   transition: background-color 0.15s ease, transform 0.1s ease;
+   will-change: transform;
+   -webkit-tap-highlight-color: transparent;
+ }
 
-  .pressable:hover {
-    background-color: #b91c1c; /* red-700 */
-    transform: translateY(-1px);
-  }
 
-  .pressable:active {
-    background-color: #7f1d1d; /* red-800 */
-    transform: translateY(1px);
-  }
-}
+ .pressable:hover {
+   background-color: #b91c1c; /* red-700 */
+   transform: translateY(-1px);
+ }
 
-@keyframes spin-slow {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
 
-.spin-slow {
-  animation: spin-slow 2s linear infinite;
+ .pressable:active {
+   background-color: #7f1d1d; /* red-800 */
+   transform: translateY(1px);
+ }
 }

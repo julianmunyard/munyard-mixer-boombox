@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, ChangeEvent } from 'react'
 import DelayKnob from './components/DelayKnob'
 
-interface Stem {
+type Stem = {
   label: string
   file: string
 }
@@ -68,7 +68,6 @@ export default function Home() {
     }
 
     init()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const stopAll = () => {
@@ -145,96 +144,85 @@ export default function Home() {
   useEffect(() => {
     const ctx = audioCtxRef.current
     if (!ctx) return
+
     Object.values(nodesRef.current).forEach((node) => {
       node.parameters.get('playbackRate')?.setValueAtTime(varispeed, ctx.currentTime)
     })
   }, [varispeed])
 
   return (
-    <>
-      <div className="fixed inset-0 z-50 bg-[#B30000] text-white flex-col justify-center items-center text-center px-8 hidden mobile:portrait:flex">
-        <div className="text-xl font-mono mb-6">Please rotate your phone</div>
-        <div className="animate-spin-slow text-5xl mb-4">🔄</div>
-        <button className="bg-white text-[#B30000] px-6 py-2 rounded font-bold tracking-wider">Rotate</button>
+    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative">
+      <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
+        Munyard Mixer
+      </h1>
+
+      <div className="flex gap-4 justify-center mb-8 flex-wrap">
+        <button onClick={playAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Play</button>
+        <button onClick={stopAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Stop</button>
+        <button onClick={unsoloAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">UNSOLO</button>
       </div>
 
-      <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative">
-        <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
-          Munyard Mixer
-        </h1>
-
-        <div className="flex gap-4 justify-center mb-8 flex-wrap">
-          <button onClick={playAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Play</button>
-          <button onClick={stopAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Stop</button>
-          <button onClick={unsoloAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">UNSOLO</button>
-        </div>
-
-        <div className="flex justify-center">
-          <div className="flex gap-6 flex-wrap">
-            {stems.map((stem) => (
-              <div key={stem.label} className="flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-4 w-24 shadow-inner">
-                <div className="w-4 h-10 bg-green-600 animate-pulse mb-4 rounded-sm" />
-                <div className="flex flex-col items-center gap-2 text-sm text-white">
-                  <span className="mb-1">LEVEL</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={volumes[stem.label]}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
-                    }
-                    className="w-1 h-36 appearance-none bg-transparent"
-                    style={{
-                      writingMode: 'vertical-lr' as React.CSSProperties['writingMode'],
-                      WebkitAppearance: 'slider-vertical'
-                    }}
-                  />
-                </div>
-
-                <div className="my-2">
-                  <DelayKnob
-                    value={delays[stem.label]}
-                    onChange={(val: number) => {
-                      setDelays((prev) => ({ ...prev, [stem.label]: val }))
-                      delaysRef.current[stem.label] = val
-                    }}
-                  />
-                </div>
-
-                <div className="mt-2 flex flex-col gap-2">
-                  <button onClick={() => toggleMute(stem.label)} className={`px-2 py-1 text-xs rounded ${mutes[stem.label] ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}>MUTE</button>
-                  <button onClick={() => toggleSolo(stem.label)} className={`px-2 py-1 text-xs rounded ${solos[stem.label] ? 'flash text-black' : 'bg-gray-700 text-white'}`}>SOLO</button>
-                  <div className="mt-4 px-2 py-1 text-xs text-white border border-gray-600 rounded bg-gray-800 tracking-wide">{stem.label}</div>
-                </div>
+      <div className="flex justify-center">
+        <div className="flex gap-6 flex-wrap">
+          {stems.map((stem) => (
+            <div key={stem.label} className="flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-4 w-24 shadow-inner">
+              <div className="w-4 h-10 bg-green-600 animate-pulse mb-4 rounded-sm" />
+              <div className="flex flex-col items-center gap-2 text-sm text-white">
+                <span className="mb-1">LEVEL</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volumes[stem.label]}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
+                  }
+                  className="w-1 h-36 appearance-none bg-transparent"
+                  // @ts-expect-error vertical slider style not supported by TypeScript types
+                  style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+                />
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="absolute right-8 top-[300px] flex flex-col items-center">
-          <span className="mb-2 text-sm text-red-700">VARISPEED</span>
-          <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
-            <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
-            <input
-              type="range"
-              min="0.5"
-              max="1.5"
-              step="0.01"
-              value={varispeed}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setVarispeed(parseFloat(e.target.value))
-              }
-              className="w-1 h-28 appearance-none bg-transparent z-10"
-              style={{
-                writingMode: 'vertical-lr' as React.CSSProperties['writingMode'],
-                WebkitAppearance: 'slider-vertical'
-              }}
-            />
-          </div>
+              <div className="my-2">
+                <DelayKnob
+                  value={delays[stem.label]}
+                  onChange={(val) => {
+                    setDelays((prev) => ({ ...prev, [stem.label]: val }))
+                    delaysRef.current[stem.label] = val
+                  }}
+                />
+              </div>
+
+              <div className="mt-2 flex flex-col gap-2">
+                <button onClick={() => toggleMute(stem.label)} className={`px-2 py-1 text-xs rounded ${mutes[stem.label] ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}>MUTE</button>
+                <button onClick={() => toggleSolo(stem.label)} className={`px-2 py-1 text-xs rounded ${solos[stem.label] ? 'flash text-black' : 'bg-gray-700 text-white'}`}>SOLO</button>
+                <div className="mt-4 px-2 py-1 text-xs text-white border border-gray-600 rounded bg-gray-800 tracking-wide">{stem.label}</div>
+              </div>
+            </div>
+          ))}
         </div>
-      </main>
-    </>
+      </div>
+
+      <div className="absolute right-8 top-[300px] flex flex-col items-center">
+        <span className="mb-2 text-sm text-red-700">VARISPEED</span>
+        <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
+          <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
+          <input
+            type="range"
+            min="0.5"
+            max="1.5"
+            step="0.01"
+            value={varispeed}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setVarispeed(parseFloat(e.target.value))
+            }
+            className="w-1 h-28 appearance-none bg-transparent z-10"
+            // @ts-expect-error vertical slider style not supported by TypeScript types
+            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
+          />
+        </div>
+      </div>
+    </main>
   )
 }
