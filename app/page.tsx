@@ -242,7 +242,7 @@ export default function Home() {
       style={{
   // Cast each property individually to avoid type errors
   writingMode: 'bt-lr' as React.CSSProperties['writingMode'],
-  WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance'],
+WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance'],
   height: 'calc(100% - 16px)',
 }}
     />
