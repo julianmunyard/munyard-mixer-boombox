@@ -170,19 +170,18 @@ export default function Home() {
               <div className="flex flex-col items-center gap-2 text-sm text-white">
                 <span className="mb-1">LEVEL</span>
                 <input
-  type="range"
-  min="0"
-  max="1"
-  step="0.01"
-  value={volumes[stem.label]}
-  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
-  }
-  className="w-1 h-40 appearance-none bg-transparent"
-  style={{ writingMode: 'bt-lr' as any, WebkitAppearance: 'slider-vertical' as any }}
-/>
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volumes[stem.label]}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
+                  }
+                  className="w-1 h-40 appearance-none bg-transparent"
+                  style={{ writingMode: 'bt-lr' as React.CSSProperties['writingMode'], WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance'] }}
+                />
               </div>
-
               <div className="my-2">
                 <DelayKnob
                   value={delays[stem.label]}
@@ -192,8 +191,7 @@ export default function Home() {
                   }}
                 />
               </div>
-
-              <div className="mt-2 flex flex-col gap-2">
+              <div className="mt-2 flex flex-col gap-2 items-center">
                 <button
                   onClick={() => toggleMute(stem.label)}
                   className={`px-2 py-1 text-xs rounded ${
@@ -214,43 +212,41 @@ export default function Home() {
                 >
                   SOLO
                 </button>
+                <div className="mt-2 px-3 py-1 text-xs rounded bg-white text-[#B8001F]">
+                  {stem.label}
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-<div className="absolute right-4 top-[260px] flex flex-col items-center">
-  <span className="mb-3 text-sm text-red-700 tracking-wider">VARISPEED</span>
-  
-  <div
-    className="relative flex flex-col items-center border border-red-700 rounded-md"
-    style={{ height: '350px', width: '36px', paddingTop: '8px', paddingBottom: '8px' }}
-  >
-    <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
-
-    <input
-      type="range"
-      min="0.5"
-      max="1.5"
-      step="0.01"
-      value={varispeed}
-      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-        setVarispeed(parseFloat(e.target.value))
-      }
-      className="w-[6px] absolute top-[8px] bottom-[8px] appearance-none bg-transparent z-10"
-      style={{
-  // Cast each property individually to avoid type errors
-  writingMode: 'bt-lr' as React.CSSProperties['writingMode'],
-WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance'],
-  height: 'calc(100% - 16px)',
-}}
-    />
-  </div>
-</div>
-
-
-
+      <div className="absolute right-4 top-[260px] flex flex-col items-center">
+        <span className="mb-3 text-sm text-red-700 tracking-wider">VARISPEED</span>
+        <div
+          className="relative flex flex-col items-center border border-red-700 rounded-md"
+          style={{ height: '350px', width: '36px', paddingTop: '8px', paddingBottom: '8px' }}
+        >
+          <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
+          <input
+            type="range"
+            min="0.5"
+            max="1.5"
+            step="0.01"
+            value={2 - varispeed}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setVarispeed(2 - parseFloat(e.target.value))
+            }
+            className="w-[6px] absolute top-[8px] bottom-[8px] appearance-none bg-transparent z-10"
+            style={{
+              WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance'],
+              writingMode: 'bt-lr' as React.CSSProperties['writingMode'],
+              height: 'calc(100% - 16px)',
+              transform: 'rotate(180deg)'
+            }}
+          />
+        </div>
+      </div>
     </main>
   )
 }
