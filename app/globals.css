@@ -122,3 +122,14 @@ input[type="range"]::-ms-thumb {
     transform: translateY(1px);
   }
 }
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.rotate-notice {
+  animation: fadeInOut 2s ease-in-out forwards;
+}

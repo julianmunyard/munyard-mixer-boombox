@@ -3,12 +3,8 @@
 import { useEffect, useRef, useState, ChangeEvent } from 'react'
 import DelayKnob from './components/DelayKnob'
 
-type Stem = {
-  label: string
-  file: string
-}
-
-const stems: Stem[] = [
+// Types and stem setup
+const stems = [
   { label: 'DRUMS', file: 'DRUMS.mp3' },
   { label: 'SYNTHS', file: 'SYNTHS.mp3' },
   { label: 'GUITARS', file: 'GUITARS.mp3' },
@@ -16,12 +12,15 @@ const stems: Stem[] = [
   { label: 'VOCALS', file: 'VOCALS.mp3' },
 ]
 
+type Stem = (typeof stems)[number]
+
 export default function Home() {
   const [volumes, setVolumes] = useState<Record<string, number>>(Object.fromEntries(stems.map(s => [s.label, 1])))
   const [delays, setDelays] = useState<Record<string, number>>(Object.fromEntries(stems.map(s => [s.label, 0])))
   const [mutes, setMutes] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [solos, setSolos] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [varispeed, setVarispeed] = useState(1)
+  const [showNotification, setShowNotification] = useState(false)
 
   const delaysRef = useRef<Record<string, number>>({})
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -32,11 +31,17 @@ export default function Home() {
   const feedbackGainsRef = useRef<Record<string, GainNode>>({})
 
   useEffect(() => {
+    if (window.innerWidth < 768) {
+      setShowNotification(true)
+      setTimeout(() => setShowNotification(false), 2000)
+    }
+  }, [])
+
+  useEffect(() => {
     const init = async () => {
       const ctx = new AudioContext()
       await ctx.audioWorklet.addModule('/granular-processor.js')
       audioCtxRef.current = ctx
-
       const eighthNoteDelay = 60 / 120 / 2
 
       const loadStem = async (label: string, file: string) => {
@@ -155,6 +160,12 @@ export default function Home() {
       <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
         Munyard Mixer
       </h1>
+
+      {showNotification && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-[#FCFAEE] text-[#B8001F] px-4 py-2 text-sm rounded-md shadow-md transition-opacity duration-500 ease-in-out animate-fade">
+          ROTATE YOUR PHONE
+        </div>
+      )}
 
       <div className="flex gap-4 justify-center mb-8 flex-wrap">
         <button onClick={playAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Play</button>
