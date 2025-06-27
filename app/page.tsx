@@ -151,7 +151,7 @@ export default function Home() {
   }, [varispeed])
 
   return (
-    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative">
+    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative overflow-y-auto" style={{ maxHeight: '100dvh' }}>
       <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
         Munyard Mixer
       </h1>
@@ -195,34 +195,57 @@ export default function Home() {
               </div>
 
               <div className="mt-2 flex flex-col gap-2">
-                <button onClick={() => toggleMute(stem.label)} className={`px-2 py-1 text-xs rounded ${mutes[stem.label] ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-white'}`}>MUTE</button>
-                <button onClick={() => toggleSolo(stem.label)} className={`px-2 py-1 text-xs rounded ${solos[stem.label] ? 'flash text-black' : 'bg-gray-700 text-white'}`}>SOLO</button>
-                <div className="mt-4 px-2 py-1 text-xs text-white border border-gray-600 rounded bg-gray-800 tracking-wide">{stem.label}</div>
+                <button
+  onClick={() => toggleMute(stem.label)}
+  className={`px-2 py-1 text-xs rounded ${
+    mutes[stem.label]
+      ? 'bg-yellow-500 text-black'
+      : 'bg-[#FCFAEE] text-[#B8001F] hover:bg-[#f0ebd6] hover:font-bold'
+  }`}
+>
+  MUTE
+</button>
+               <button
+  onClick={() => toggleSolo(stem.label)}
+  className={`px-2 py-1 text-xs rounded ${
+    solos[stem.label]
+      ? 'flash text-black'
+      : 'bg-[#FCFAEE] text-[#B8001F] hover:bg-[#f0ebd6] hover:font-bold'
+  }`}
+>
+  SOLO
+</button>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="absolute right-8 top-[300px] flex flex-col items-center">
-        <span className="mb-2 text-sm text-red-700">VARISPEED</span>
-        <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-3" style={{ height: '160px' }}>
-          <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
-          <input
-            type="range"
-            min="0.5"
-            max="1.5"
-            step="0.01"
-            value={varispeed}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setVarispeed(parseFloat(e.target.value))
-            }
-            className="w-1 h-28 appearance-none bg-transparent z-10"
-            // @ts-expect-error vertical slider style not supported by TypeScript types
-            style={{ writingMode: 'bt-lr', WebkitAppearance: 'slider-vertical' }}
-          />
-        </div>
-      </div>
+<div className="absolute right-8 top-16 bottom-16 flex flex-col items-center justify-center">
+  <span className="mb-4 text-sm text-red-700">VARISPEED</span>
+  <div className="relative flex flex-col items-center border border-red-700 rounded-md px-4 py-6 h-full">
+    <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
+    <input
+      type="range"
+      min="0.5"
+      max="1.5"
+      step="0.01"
+      value={varispeed}
+      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+        setVarispeed(parseFloat(e.target.value))
+      }
+      className="w-1 appearance-none bg-transparent z-10"
+      // @ts-ignore: vertical slider not officially typed in TS
+      style={{
+        height: 'calc(100% - 32px)', // still padded, but overall container is shorter
+        writingMode: 'bt-lr' as any,
+        WebkitAppearance: 'slider-vertical' as any,
+        marginTop: '16px',
+        marginBottom: '16px',
+      }}
+    />
+  </div>
+</div>
     </main>
   )
 }
