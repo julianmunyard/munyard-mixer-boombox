@@ -22,6 +22,7 @@ export default function Home() {
   const [mutes, setMutes] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [solos, setSolos] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
   const [varispeed, setVarispeed] = useState(1)
+  const [showNotification, setShowNotification] = useState(false)
 
   const delaysRef = useRef<Record<string, number>>({})
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -30,6 +31,14 @@ export default function Home() {
   const gainNodesRef = useRef<Record<string, GainNode>>({})
   const delayNodesRef = useRef<Record<string, DelayNode>>({})
   const feedbackGainsRef = useRef<Record<string, GainNode>>({})
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setShowNotification(true)
+      const timer = setTimeout(() => setShowNotification(false), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   useEffect(() => {
     const init = async () => {
@@ -155,6 +164,12 @@ export default function Home() {
       <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
         Munyard Mixer
       </h1>
+
+      {showNotification && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-[#FCFAEE] text-[#B8001F] px-5 py-3 text-sm rounded-md shadow-md z-50 animate-fadeInOut">
+          ROTATE YOUR PHONE
+        </div>
+      )}
 
       <div className="flex gap-4 justify-center mb-8 flex-wrap">
         <button onClick={playAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Play</button>
