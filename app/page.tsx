@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+type Position = { x: number; y: number };
+
 const STEMS = [
   { name: 'Drums', file: '/stems/millionaire/DRUMS.mp3' },
   { name: 'Bass', file: '/stems/millionaire/BASS.mp3' },
@@ -10,7 +12,7 @@ const STEMS = [
   { name: 'Vocals', file: '/stems/millionaire/VOCALS.mp3' },
 ];
 
-const FADER_POSITIONS = [
+const FADER_POSITIONS: Position[] = [
   { x: 551, y: 650 },
   { x: 646, y: 652 },
   { x: 732, y: 650 },
@@ -18,7 +20,7 @@ const FADER_POSITIONS = [
   { x: 915, y: 650 },
 ];
 
-const SOLO_POSITIONS = [
+const SOLO_POSITIONS: Position[] = [
   { x: 527, y: 470 },
   { x: 622, y: 470 },
   { x: 708, y: 472 },
@@ -26,7 +28,7 @@ const SOLO_POSITIONS = [
   { x: 893, y: 474 },
 ];
 
-const MUTE_POSITIONS = [
+const MUTE_POSITIONS: Position[] = [
   { x: 526, y: 527 },
   { x: 621, y: 527 },
   { x: 708, y: 527 },
@@ -52,9 +54,11 @@ export default function Home() {
       audio.loop = true;
       audio.crossOrigin = 'anonymous';
       audio.preload = 'auto';
+
       const source = audioCtxRef.current!.createMediaElementSource(audio);
       const gain = audioCtxRef.current!.createGain();
       gain.gain.value = 1;
+
       source.connect(gain).connect(audioCtxRef.current!.destination);
       gainNodes.current[i] = gain;
       stemRefs.current[i] = audio;
@@ -92,9 +96,13 @@ export default function Home() {
     faderRefs.current.forEach((el, i) => {
       if (!el) return;
 
-      const startDrag = (startY: number, startVolume: number, clientYGetter: (e: any) => number) => {
-        const moveHandler = (e: any) => {
-          const deltaY = clientYGetter(e) - startY;
+      const startDrag = (
+        startY: number,
+        startVolume: number,
+        getClientY: (ev: MouseEvent | TouchEvent) => number
+      ) => {
+        const handleMove = (e: MouseEvent | TouchEvent) => {
+          const deltaY = getClientY(e) - startY;
           const DRAG_RESISTANCE = 100;
           const newVolume = Math.max(0, Math.min(1, startVolume - deltaY / DRAG_RESISTANCE));
           setVolumes((prev) => {
@@ -104,28 +112,28 @@ export default function Home() {
           });
         };
 
-        const endHandler = () => {
-          window.removeEventListener('mousemove', moveHandler);
-          window.removeEventListener('mouseup', endHandler);
-          window.removeEventListener('touchmove', moveHandler);
-          window.removeEventListener('touchend', endHandler);
+        const stop = () => {
+          window.removeEventListener('mousemove', handleMove as EventListener);
+          window.removeEventListener('mouseup', stop);
+          window.removeEventListener('touchmove', handleMove as EventListener);
+          window.removeEventListener('touchend', stop);
         };
 
-        window.addEventListener('mousemove', moveHandler);
-        window.addEventListener('mouseup', endHandler);
-        window.addEventListener('touchmove', moveHandler);
-        window.addEventListener('touchend', endHandler);
+        window.addEventListener('mousemove', handleMove as EventListener);
+        window.addEventListener('mouseup', stop);
+        window.addEventListener('touchmove', handleMove as EventListener);
+        window.addEventListener('touchend', stop);
       };
 
       const handleMouseDown = (e: MouseEvent) => {
         e.preventDefault();
-        startDrag(e.clientY, volumes[i], (ev) => ev.clientY);
+        startDrag(e.clientY, volumes[i], (ev) => (ev as MouseEvent).clientY);
       };
 
       const handleTouchStart = (e: TouchEvent) => {
         const touch = e.touches[0];
         if (!touch) return;
-        startDrag(touch.clientY, volumes[i], (ev) => ev.touches[0].clientY);
+        startDrag(touch.clientY, volumes[i], (ev) => (ev as TouchEvent).touches[0].clientY);
       };
 
       el.addEventListener('mousedown', handleMouseDown);
@@ -141,9 +149,9 @@ export default function Home() {
   const playAll = () => {
     if (!audioCtxRef.current) return;
     audioCtxRef.current.resume().then(() => {
-      stemRefs.current.forEach((audio, i) => {
+      stemRefs.current.forEach((audio) => {
         if (audio) {
-          audio.play().catch((err) => console.warn(`Stem ${i} failed to play:`, err));
+          audio.play().catch((err) => console.warn('Audio failed:', err));
         }
       });
     });
@@ -162,7 +170,6 @@ export default function Home() {
         style={{
           width: '1536px',
           height: '1024px',
-          position: 'relative',
           imageRendering: 'pixelated',
         }}
       >
@@ -179,37 +186,35 @@ export default function Home() {
         />
 
         {/* FADERS */}
-        {STEMS.map((_, i) => {
-          const { x, y } = FADER_POSITIONS[i];
-          return (
-            <div
-              key={`fader-${i}`}
-              ref={(el: HTMLDivElement | null) => {
-  faderRefs.current[i] = el;
-}}
-              className="absolute"
+        {FADER_POSITIONS.map(({ x, y }, i) => (
+          <div
+            key={`fader-${i}`}
+            ref={(el) => {
+              faderRefs.current[i] = el as HTMLDivElement | null;
+            }}
+            className="absolute"
+            style={{
+              left: `${x}px`,
+              top: `${y}px`,
+              pointerEvents: 'auto',
+              touchAction: 'none',
+              cursor: 'ns-resize',
+            }}
+          >
+            <img
+              src={`/fader-button-${i + 1}.png`}
+              alt={`fader ${i + 1}`}
               style={{
-                left: `${x}px`,
-                top: `${y}px`,
-                pointerEvents: 'auto',
-                touchAction: 'none',
+                transform: `translateY(${(1 - volumes[i]) * FADER_TRAVEL * 2}px)`,
+                transition: 'transform 0.05s linear',
+                userSelect: 'none',
               }}
-            >
-              <img
-                src={`/fader-button-${i + 1}.png`}
-                alt={`fader ${i + 1}`}
-                style={{
-                  transform: `translateY(${(1 - volumes[i]) * FADER_TRAVEL * 2}px)`,
-                  transition: 'transform 0.05s linear',
-                  userSelect: 'none',
-                }}
-                draggable={false}
-              />
-            </div>
-          );
-        })}
+              draggable={false}
+            />
+          </div>
+        ))}
 
-        {/* SOLO BUTTONS */}
+        {/* SOLO */}
         {SOLO_POSITIONS.map(({ x, y }, i) => (
           <img
             key={`solo-${i}`}
@@ -229,7 +234,7 @@ export default function Home() {
           />
         ))}
 
-        {/* MUTE BUTTONS */}
+        {/* MUTE */}
         {MUTE_POSITIONS.map(({ x, y }, i) => (
           <img
             key={`mute-${i}`}
