@@ -174,11 +174,3 @@ input[type="range"]::-ms-thumb {
   animation-timing-function: linear !important;
 }
 
-img {
-  -webkit-user-drag: none;
-  user-select: none;
-}
-
-img:active {
-  pointer-events: none;
-}
