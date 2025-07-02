@@ -1,267 +1,269 @@
-'use client'
+'use client';
 
-import { useEffect, useRef, useState, ChangeEvent } from 'react'
-import DelayKnob from './components/DelayKnob'
+import { useEffect, useRef, useState } from 'react';
 
-type Stem = {
-  label: string
-  file: string
-}
+const STEMS = [
+  { name: 'Drums', file: '/stems/millionaire/DRUMS.mp3' },
+  { name: 'Bass', file: '/stems/millionaire/BASS.mp3' },
+  { name: 'Guitar', file: '/stems/millionaire/GUITARS.mp3' },
+  { name: 'Synths', file: '/stems/millionaire/SYNTHS.mp3' },
+  { name: 'Vocals', file: '/stems/millionaire/VOCALS.mp3' },
+];
 
-const stems: Stem[] = [
-  { label: 'DRUMS', file: 'DRUMS.mp3' },
-  { label: 'SYNTHS', file: 'SYNTHS.mp3' },
-  { label: 'GUITARS', file: 'GUITARS.mp3' },
-  { label: 'BASS', file: 'BASS.mp3' },
-  { label: 'VOCALS', file: 'VOCALS.mp3' },
-]
+const FADER_POSITIONS = [
+  { x: 551, y: 650 },
+  { x: 646, y: 652 },
+  { x: 732, y: 650 },
+  { x: 820, y: 650 },
+  { x: 915, y: 650 },
+];
+
+const SOLO_POSITIONS = [
+  { x: 527, y: 470 },
+  { x: 622, y: 470 },
+  { x: 708, y: 472 },
+  { x: 797, y: 473 },
+  { x: 893, y: 474 },
+];
+
+const MUTE_POSITIONS = [
+  { x: 526, y: 527 },
+  { x: 621, y: 527 },
+  { x: 708, y: 527 },
+  { x: 797, y: 527 },
+  { x: 892, y: 527 },
+];
+
+const FADER_TRAVEL = 45;
 
 export default function Home() {
-  const [volumes, setVolumes] = useState<Record<string, number>>(Object.fromEntries(stems.map(s => [s.label, 1])))
-  const [delays, setDelays] = useState<Record<string, number>>(Object.fromEntries(stems.map(s => [s.label, 0])))
-  const [mutes, setMutes] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
-  const [solos, setSolos] = useState<Record<string, boolean>>(Object.fromEntries(stems.map(s => [s.label, false])))
-  const [varispeed, setVarispeed] = useState(1)
-  const [showNotification, setShowNotification] = useState(false)
-
-  const delaysRef = useRef<Record<string, number>>({})
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const buffersRef = useRef<Record<string, AudioBuffer>>({})
-  const nodesRef = useRef<Record<string, AudioWorkletNode>>({})
-  const gainNodesRef = useRef<Record<string, GainNode>>({})
-  const delayNodesRef = useRef<Record<string, DelayNode>>({})
-  const feedbackGainsRef = useRef<Record<string, GainNode>>({})
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const stemRefs = useRef<(HTMLAudioElement | null)[]>([]);
+  const gainNodes = useRef<GainNode[]>([]);
+  const faderRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [volumes, setVolumes] = useState<number[]>(Array(STEMS.length).fill(1));
+  const [isMuted, setIsMuted] = useState<boolean[]>(Array(STEMS.length).fill(false));
+  const [isSoloed, setIsSoloed] = useState<boolean[]>(Array(STEMS.length).fill(false));
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setShowNotification(true)
-      const timer = setTimeout(() => setShowNotification(false), 2000)
-      return () => clearTimeout(timer)
-    }
-  }, [])
+    audioCtxRef.current = new AudioContext();
+    STEMS.forEach((stem, i) => {
+      const audio = new Audio(stem.file);
+      audio.loop = true;
+      audio.crossOrigin = 'anonymous';
+      audio.preload = 'auto';
+      const source = audioCtxRef.current!.createMediaElementSource(audio);
+      const gain = audioCtxRef.current!.createGain();
+      gain.gain.value = 1;
+      source.connect(gain).connect(audioCtxRef.current!.destination);
+      gainNodes.current[i] = gain;
+      stemRefs.current[i] = audio;
+    });
+  }, []);
 
   useEffect(() => {
-    const init = async () => {
-      const ctx = new AudioContext()
-      await ctx.audioWorklet.addModule('/granular-processor.js')
-      audioCtxRef.current = ctx
+    const soloActive = isSoloed.some((s) => s);
+    STEMS.forEach((_, i) => {
+      const gain = gainNodes.current[i];
+      if (!gain) return;
+      gain.gain.value = soloActive
+        ? isSoloed[i] ? volumes[i] : 0
+        : isMuted[i] ? 0 : volumes[i];
+    });
+  }, [volumes, isMuted, isSoloed]);
 
-      const eighthNoteDelay = 60 / 120 / 2
+  const toggleMute = (i: number) => {
+    setIsMuted((prev) => {
+      const copy = [...prev];
+      copy[i] = !copy[i];
+      return copy;
+    });
+  };
 
-      const loadStem = async (label: string, file: string) => {
-        const res = await fetch(`/stems/millionaire/${file}`)
-        const arrayBuffer = await res.arrayBuffer()
-        const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
-        buffersRef.current[label] = audioBuffer
+  const toggleSolo = (i: number) => {
+    setIsSoloed((prev) => {
+      const copy = [...prev];
+      copy[i] = !copy[i];
+      return copy;
+    });
+  };
 
-        const gainNode = ctx.createGain()
-        const delayNode = ctx.createDelay(5.0)
-        const feedback = ctx.createGain()
+  useEffect(() => {
+    faderRefs.current.forEach((el, i) => {
+      if (!el) return;
 
-        delayNode.delayTime.value = eighthNoteDelay
-        feedback.gain.value = delaysRef.current[label] || 0
+      const startDrag = (startY: number, startVolume: number, clientYGetter: (e: any) => number) => {
+        const moveHandler = (e: any) => {
+          const deltaY = clientYGetter(e) - startY;
+          const DRAG_RESISTANCE = 100;
+          const newVolume = Math.max(0, Math.min(1, startVolume - deltaY / DRAG_RESISTANCE));
+          setVolumes((prev) => {
+            const updated = [...prev];
+            updated[i] = newVolume;
+            return updated;
+          });
+        };
 
-        delayNode.connect(feedback).connect(delayNode)
-        delayNode.connect(gainNode)
-        gainNode.connect(ctx.destination)
+        const endHandler = () => {
+          window.removeEventListener('mousemove', moveHandler);
+          window.removeEventListener('mouseup', endHandler);
+          window.removeEventListener('touchmove', moveHandler);
+          window.removeEventListener('touchend', endHandler);
+        };
 
-        gainNodesRef.current[label] = gainNode
-        delayNodesRef.current[label] = delayNode
-        feedbackGainsRef.current[label] = feedback
-      }
+        window.addEventListener('mousemove', moveHandler);
+        window.addEventListener('mouseup', endHandler);
+        window.addEventListener('touchmove', moveHandler);
+        window.addEventListener('touchend', endHandler);
+      };
 
-      for (const { label, file } of stems) {
-        delaysRef.current[label] = delays[label] || 0
-        await loadStem(label, file)
-      }
-    }
+      const handleMouseDown = (e: MouseEvent) => {
+        e.preventDefault();
+        startDrag(e.clientY, volumes[i], (ev) => ev.clientY);
+      };
 
-    init()
-  }, [])
+      const handleTouchStart = (e: TouchEvent) => {
+        const touch = e.touches[0];
+        if (!touch) return;
+        startDrag(touch.clientY, volumes[i], (ev) => ev.touches[0].clientY);
+      };
+
+      el.addEventListener('mousedown', handleMouseDown);
+      el.addEventListener('touchstart', handleTouchStart);
+
+      return () => {
+        el.removeEventListener('mousedown', handleMouseDown);
+        el.removeEventListener('touchstart', handleTouchStart);
+      };
+    });
+  }, [volumes]);
+
+  const playAll = () => {
+    if (!audioCtxRef.current) return;
+    audioCtxRef.current.resume().then(() => {
+      stemRefs.current.forEach((audio, i) => {
+        if (audio) {
+          audio.play().catch((err) => console.warn(`Stem ${i} failed to play:`, err));
+        }
+      });
+    });
+  };
 
   const stopAll = () => {
-    Object.values(nodesRef.current).forEach((node) => {
-      try {
-        node.port.postMessage({ type: 'stop' })
-        node.disconnect()
-      } catch {}
-    })
-    nodesRef.current = {}
-  }
-
-  const playAll = async () => {
-    const ctx = audioCtxRef.current
-    if (!ctx) return
-    if (ctx.state === 'suspended') await ctx.resume()
-
-    stopAll()
-
-    stems.forEach(({ label }) => {
-      const buffer = buffersRef.current[label]
-      const gain = gainNodesRef.current[label]
-      const delay = delayNodesRef.current[label]
-      if (!buffer || !gain || !delay) return
-
-      const node = new AudioWorkletNode(ctx, 'granular-player')
-      node.port.postMessage({ type: 'load', buffer: buffer.getChannelData(0) })
-      node.parameters.get('playbackRate')?.setValueAtTime(varispeed, ctx.currentTime)
-      node.connect(delay)
-
-      const soloed = Object.values(solos).some(Boolean)
-      const shouldPlay = soloed ? solos[label] : !mutes[label]
-      gain.gain.value = shouldPlay ? volumes[label] : 0
-
-      nodesRef.current[label] = node
-    })
-  }
-
-  const toggleMute = (label: string) => {
-    setMutes((prev) => ({ ...prev, [label]: !prev[label] }))
-    setSolos((prev) => ({ ...prev, [label]: false }))
-  }
-
-  const toggleSolo = (label: string) => {
-    setSolos((prev) => ({ ...prev, [label]: !prev[label] }))
-    setMutes((prev) => ({ ...prev, [label]: false }))
-  }
-
-  const unsoloAll = () => {
-    setSolos(Object.fromEntries(stems.map(({ label }) => [label, false])))
-    setMutes(Object.fromEntries(stems.map(({ label }) => [label, false])))
-  }
-
-  useEffect(() => {
-    const ctx = audioCtxRef.current
-    if (!ctx) return
-    const eighthNoteDelay = 60 / 120 / 2
-
-    stems.forEach(({ label }) => {
-      const gain = gainNodesRef.current[label]
-      const delay = delayNodesRef.current[label]
-      const feedback = feedbackGainsRef.current[label]
-      if (!gain || !delay || !feedback) return
-
-      const soloed = Object.values(solos).some(Boolean)
-      const shouldPlay = soloed ? solos[label] : !mutes[label]
-      gain.gain.value = shouldPlay ? volumes[label] : 0
-
-      delay.delayTime.value = eighthNoteDelay
-      feedback.gain.setTargetAtTime(delays[label] || 0, ctx.currentTime, 2.5)
-    })
-  }, [volumes, mutes, solos, delays])
-
-  useEffect(() => {
-    const ctx = audioCtxRef.current
-    if (!ctx) return
-
-    Object.values(nodesRef.current).forEach((node) => {
-      node.parameters.get('playbackRate')?.setValueAtTime(varispeed, ctx.currentTime)
-    })
-  }, [varispeed])
+    stemRefs.current.forEach((audio) => {
+      if (audio) audio.pause();
+    });
+  };
 
   return (
-    <main className="min-h-screen bg-[#FCFAEE] text-[#B8001F] p-8 font-sans relative overflow-y-auto" style={{ maxHeight: '100dvh' }}>
-      <h1 className="village text-center mb-10" style={{ fontSize: '96px', letterSpacing: '0.05em', lineHeight: '1.1' }}>
-        Munyard Mixer
-      </h1>
+    <div className="flex items-center justify-center min-h-screen bg-black flex-col touch-none">
+      <div
+        className="relative"
+        style={{
+          width: '1536px',
+          height: '1024px',
+          position: 'relative',
+          imageRendering: 'pixelated',
+        }}
+      >
+        <img
+          src="/boom-box.png"
+          alt="boombox"
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
+        />
 
-      {showNotification && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-[#FCFAEE] text-[#B8001F] px-5 py-3 text-sm rounded-md shadow-md z-50 animate-fadeInOut">
-          ROTATE YOUR PHONE
-        </div>
-      )}
-
-      <div className="flex gap-4 justify-center mb-8 flex-wrap">
-        <button onClick={playAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Play</button>
-        <button onClick={stopAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">Stop</button>
-        <button onClick={unsoloAll} className="pressable bg-[#B30000] text-white px-6 py-2 font-mono tracking-wide">UNSOLO</button>
-      </div>
-
-      <div className="flex justify-center">
-        <div className="flex gap-4 flex-wrap sm:gap-6">
-          {stems.map((stem) => (
-            <div key={stem.label} className="flex flex-col items-center rounded-lg border border-gray-700 bg-[#B30000] p-3 sm:p-4 w-20 sm:w-24 shadow-inner">
-              <div className="w-4 h-10 bg-green-600 animate-pulse mb-4 rounded-sm" />
-              <div className="flex flex-col items-center gap-2 text-sm text-white">
-                <span className="mb-1">LEVEL</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volumes[stem.label]}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setVolumes((prev) => ({ ...prev, [stem.label]: parseFloat(e.target.value) }))
-                  }
-                  className="w-1 h-40 appearance-none bg-transparent"
-                  style={{ writingMode: 'bt-lr' as React.CSSProperties['writingMode'], WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance'] }}
-                />
-              </div>
-              <div className="my-2">
-                <DelayKnob
-                  value={delays[stem.label]}
-                  onChange={(val) => {
-                    setDelays((prev) => ({ ...prev, [stem.label]: val }))
-                    delaysRef.current[stem.label] = val
-                  }}
-                />
-              </div>
-              <div className="mt-2 flex flex-col gap-2 items-center">
-                <button
-                  onClick={() => toggleMute(stem.label)}
-                  className={`px-2 py-1 text-xs rounded ${
-                    mutes[stem.label]
-                      ? 'bg-yellow-500 text-black'
-                      : 'bg-white text-[#B8001F] hover:bg-[#f0ebd6]'
-                  }`}
-                >
-                  MUTE
-                </button>
-                <button
-                  onClick={() => toggleSolo(stem.label)}
-                  className={`px-2 py-1 text-xs rounded ${
-                    solos[stem.label]
-                      ? 'flash text-black'
-                      : 'bg-white text-[#B8001F] hover:bg-[#f0ebd6]'
-                  }`}
-                >
-                  SOLO
-                </button>
-                <div className="mt-2 px-3 py-1 text-xs rounded bg-white text-[#B8001F]">
-                  {stem.label}
-                </div>
-              </div>
+        {/* FADERS */}
+        {STEMS.map((_, i) => {
+          const { x, y } = FADER_POSITIONS[i];
+          return (
+            <div
+              key={`fader-${i}`}
+              ref={(el: HTMLDivElement | null) => {
+  faderRefs.current[i] = el;
+}}
+              className="absolute"
+              style={{
+                left: `${x}px`,
+                top: `${y}px`,
+                pointerEvents: 'auto',
+                touchAction: 'none',
+              }}
+            >
+              <img
+                src={`/fader-button-${i + 1}.png`}
+                alt={`fader ${i + 1}`}
+                style={{
+                  transform: `translateY(${(1 - volumes[i]) * FADER_TRAVEL * 2}px)`,
+                  transition: 'transform 0.05s linear',
+                  userSelect: 'none',
+                }}
+                draggable={false}
+              />
             </div>
-          ))}
-        </div>
+          );
+        })}
+
+        {/* SOLO BUTTONS */}
+        {SOLO_POSITIONS.map(({ x, y }, i) => (
+          <img
+            key={`solo-${i}`}
+            src={`/solo-button-${i + 1}.png`}
+            alt={`solo ${i + 1}`}
+            onClick={() => toggleSolo(i)}
+            className={`${isSoloed[i] ? 'flash-solo pressed' : ''}`}
+            style={{
+              position: 'absolute',
+              left: `${x}px`,
+              top: `${y}px`,
+              cursor: 'pointer',
+              userSelect: 'none',
+              transition: 'all 0.1s ease-in-out',
+            }}
+            draggable={false}
+          />
+        ))}
+
+        {/* MUTE BUTTONS */}
+        {MUTE_POSITIONS.map(({ x, y }, i) => (
+          <img
+            key={`mute-${i}`}
+            src={`/mute-button-${i + 1}.png`}
+            alt={`mute ${i + 1}`}
+            onClick={() => toggleMute(i)}
+            className={isMuted[i] ? 'pressed' : ''}
+            style={{
+              position: 'absolute',
+              left: `${x}px`,
+              top: `${y}px`,
+              cursor: 'pointer',
+              userSelect: 'none',
+              transition: 'all 0.1s ease-in-out',
+            }}
+            draggable={false}
+          />
+        ))}
       </div>
 
-      <div className="absolute right-4 top-[260px] flex flex-col items-center">
-        <span className="mb-3 text-sm text-red-700 tracking-wider">VARISPEED</span>
-        <div
-          className="relative flex flex-col items-center border border-red-700 rounded-md"
-          style={{ height: '350px', width: '36px', paddingTop: '8px', paddingBottom: '8px' }}
+      <div className="mt-8 flex gap-8">
+        <button
+          onClick={playAll}
+          className="bg-white text-black px-6 py-3 text-xl font-[Village] tracking-wide"
         >
-          <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-2 h-[1px] bg-red-700" />
-          <input
-            type="range"
-            min="0.5"
-            max="1.5"
-            step="0.01"
-            value={2 - varispeed}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setVarispeed(2 - parseFloat(e.target.value))
-            }
-            className="w-[6px] absolute top-[8px] bottom-[8px] appearance-none bg-transparent z-10"
-            style={{
-              WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance'],
-              writingMode: 'bt-lr' as React.CSSProperties['writingMode'],
-              height: 'calc(100% - 16px)',
-              transform: 'rotate(180deg)'
-            }}
-          />
-        </div>
+          PLAY
+        </button>
+        <button
+          onClick={stopAll}
+          className="bg-white text-black px-6 py-3 text-xl font-[Village] tracking-wide"
+        >
+          STOP
+        </button>
       </div>
-    </main>
-  )
+    </div>
+  );
 }
