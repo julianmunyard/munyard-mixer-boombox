@@ -166,7 +166,7 @@ export default function Home() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-black flex-col touch-none">
       <div
-        className="relative"
+        className="relative scale-[0.35] md:scale-100 origin-top md:origin-center mx-auto"
         style={{
           width: '1536px',
           height: '1024px',
