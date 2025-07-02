@@ -174,3 +174,9 @@ input[type="range"]::-ms-thumb {
   animation-timing-function: linear !important;
 }
 
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .boombox-scale-down {
+    transform: scale(0.4);
+    transform-origin: top center;
+  }
+}

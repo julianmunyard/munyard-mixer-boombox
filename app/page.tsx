@@ -164,13 +164,12 @@ export default function Home() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black flex-col touch-none">
+    <div className="flex flex-col items-center justify-center bg-black p-4 overflow-hidden">
       <div
-        className="relative scale-[0.35] md:scale-100 origin-top md:origin-center mx-auto"
+        className="relative mx-auto origin-top scale-[0.3] md:scale-100"
         style={{
           width: '1536px',
           height: '1024px',
-          imageRendering: 'pixelated',
         }}
       >
         <img
@@ -185,7 +184,6 @@ export default function Home() {
           }}
         />
 
-        {/* FADERS */}
         {FADER_POSITIONS.map(({ x, y }, i) => (
           <div
             key={`fader-${i}`}
@@ -214,7 +212,6 @@ export default function Home() {
           </div>
         ))}
 
-        {/* SOLO */}
         {SOLO_POSITIONS.map(({ x, y }, i) => (
           <img
             key={`solo-${i}`}
@@ -234,7 +231,6 @@ export default function Home() {
           />
         ))}
 
-        {/* MUTE */}
         {MUTE_POSITIONS.map(({ x, y }, i) => (
           <img
             key={`mute-${i}`}
@@ -255,7 +251,7 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="mt-8 flex gap-8">
+      <div className="mt-4 flex gap-8">
         <button
           onClick={playAll}
           className="bg-white text-black px-6 py-3 text-xl font-[Village] tracking-wide"
